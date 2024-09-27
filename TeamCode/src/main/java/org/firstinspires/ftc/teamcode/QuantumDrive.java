@@ -63,7 +63,7 @@ public class QuantumDrive extends LinearOpMode {
             double y = Math.abs(gamepad1.left_stick_y) > deadzone ? gamepad1.left_stick_y : gamepad1.right_stick_y;
             double x = -gamepad1.right_stick_x * 1.1;
             double rx = -gamepad1.left_stick_x;
-
+            // d
             boolean liftUp = gamepad1.left_bumper;
             boolean liftDown = gamepad1.left_trigger > 0.1;
             boolean extendOut = gamepad1.right_bumper;
