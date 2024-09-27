@@ -3,9 +3,12 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "MecanumSample")
 public class MecanumSample extends LinearOpMode {
+    Servo intakeServo;
+    Servo wristServo;
     @Override
     public void runOpMode() throws InterruptedException {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("leftFront");
@@ -14,6 +17,9 @@ public class MecanumSample extends LinearOpMode {
         DcMotor backRightMotor = hardwareMap.dcMotor.get("rightRear");
         DcMotor armExtend = hardwareMap.dcMotor.get("extension");
         DcMotor armLift = hardwareMap.dcMotor.get("lift");
+
+        intakeServo = hardwareMap.servo.get("intake");
+        wristServo = hardwareMap.servo.get("wrist");
 
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -55,13 +61,29 @@ public class MecanumSample extends LinearOpMode {
             boolean extendOut = gamepad1.right_bumper;
             boolean retractIn = gamepad1.right_trigger > 0.1;
 
+            if (gamepad1.a) {
+                // Open the claw
+                intakeServo.setPosition(1);
+            } else if (gamepad1.b) {
+                // Close the claw
+                intakeServo.setPosition(0);
+            }else {
+                intakeServo.setPosition(0.5);
+            }
+            if (gamepad1.x) {
+                // Open the claw
+                wristServo.setPosition(1);
+            } else if (gamepad1.y) {
+                // Close the claw
+                wristServo.setPosition(0.45);
+            }
             if (!liftUp && !liftDown){
                 armLift.setPower(0);
             }else{
                 if (liftUp) {
-                    armLift.setPower(-0.6 + gravityCompensation);
-                }else{
                     armLift.setPower(0.6 + gravityCompensation);
+                }else{
+                    armLift.setPower(-0.6 + gravityCompensation);
                 }
             }
             if(!extendOut && !retractIn) {
