@@ -5,8 +5,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp(name = "MecanumSample")
-public class MecanumSample extends LinearOpMode {
+@TeleOp(name = "QuantumDrive")
+public class QuantumDrive extends LinearOpMode {
     Servo intakeServo;
     Servo wristServo;
     @Override
