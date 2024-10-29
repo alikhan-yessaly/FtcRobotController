@@ -7,24 +7,30 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "QuantumDrive")
 public class QuantumDrive extends LinearOpMode {
-    Servo intakeServo;
+    Servo clawServo;
     Servo wristServo;
+    Servo arm1Servo;
+    Servo arm0Servo;
+    Servo liftUpServo;
     @Override
     public void runOpMode() throws InterruptedException {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("leftFront");
         DcMotor backLeftMotor = hardwareMap.dcMotor.get("leftRear");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("rightFront");
         DcMotor backRightMotor = hardwareMap.dcMotor.get("rightRear");
-        DcMotor armExtend = hardwareMap.dcMotor.get("extension");
-        DcMotor armLift = hardwareMap.dcMotor.get("lift");
+        DcMotor armLift1 = hardwareMap.dcMotor.get("lift1");
+        DcMotor armLift2 = hardwareMap.dcMotor.get("lift2");
 
-        intakeServo = hardwareMap.servo.get("intake");
+        clawServo = hardwareMap.servo.get("claw");
         wristServo = hardwareMap.servo.get("wrist");
+        arm1Servo = hardwareMap.servo.get("arm1");
+        arm0Servo = hardwareMap.servo.get("arm0");
+        liftUpServo = hardwareMap.servo.get("liftUp");
 
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        armExtend.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armLift1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armLift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         waitForStart();
 
         if (isStopRequested()) return;
@@ -42,21 +48,17 @@ public class QuantumDrive extends LinearOpMode {
         double deadzone = 0.1; // Adjust this value for the deadzone of the joysticks
 
         // armLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        armExtend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armExtend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armLift1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armLift1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        armLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armLift2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armLift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         frontLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Set initial position to 0
-        int initialPosition = armLift.getCurrentPosition();
-        int drivePosition = initialPosition + 300;
-        wristServo.setPosition(0.1);
         // Main loop: run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             // double y = gamepad1.left_stick_y;
@@ -71,69 +73,48 @@ public class QuantumDrive extends LinearOpMode {
 
             if (gamepad1.a) {
                 // Extract the piece
-                intakeServo.setPosition(1);
+                clawServo.setPosition(0.8);
             } else if (gamepad1.b) {
                 // Intake the piece
-                armLift.setTargetPosition(initialPosition);
-                armLift.setPower(0.8);
-                wristServo.setPosition(0.9);
-                intakeServo.setPosition(0);
+                wristServo.setPosition(0.5);
+                clawServo.setPosition(0);
             }else {
-                intakeServo.setPosition(0.5);
+                clawServo.setPosition(0);
             }
+
             if (gamepad1.x) {
                 // Up the wrist
-                wristServo.setPosition(0.1);
+                wristServo.setPosition(0.0);
             } else if (gamepad1.y) {
                 // Down the wrist
-                wristServo.setPosition(0.9);
+                wristServo.setPosition(0.5);
             }
-            boolean isDriving = !gamepad1.b && (Math.abs(gamepad1.left_stick_y) > deadzone ||
-                    Math.abs(gamepad1.left_stick_x) > deadzone ||
-                    Math.abs(gamepad1.right_stick_x) > deadzone);
 
             if (liftUp) {
                 // Get current position and set it as the target
-                int currentPosition = armLift.getCurrentPosition();
-                armLift.setTargetPosition(currentPosition + 100); // Move up by 50 ticks
-                armLift.setPower(0.8);
+                int currentPosition1 = armLift1.getCurrentPosition();
+                armLift1.setTargetPosition(currentPosition1 + 100); // Move up by 50 ticks
+                armLift1.setPower(0.8);
+                int currentPosition2 = armLift2.getCurrentPosition();
+                armLift2.setTargetPosition(currentPosition2 + 100); // Move up by 50 ticks
+                armLift2.setPower(0.8);
             } else if (liftDown) {
                 // Get current position and set it as the target
-                int currentPosition = armLift.getCurrentPosition();
-                armLift.setTargetPosition(currentPosition - 100); // Move down by 50 ticks
-                armLift.setPower(0.8);
-            } else if (isDriving) {
-                // Go to drive position when driving
-                if (armLift.getCurrentPosition() < drivePosition) {
-                    armLift.setTargetPosition(drivePosition);
-                    armLift.setPower(0.8);
-                }
+                int currentPosition1 = armLift1.getCurrentPosition();
+                armLift1.setTargetPosition(currentPosition1 - 100); // Move down by 50 ticks
+                armLift1.setPower(0.8);
+                int currentPosition2 = armLift2.getCurrentPosition();
+                armLift2.setTargetPosition(currentPosition2 - 100); // Move down by 50 ticks
+                armLift2.setPower(0.8);
             } else {
                 // Hold the current position when not driving and no button is pressed
-                int currentPosition = armLift.getCurrentPosition();
-                armLift.setTargetPosition(currentPosition);
-                armLift.setPower(0.8); // A small power to hold the position
-            }
-
-            if (extendOut) {
-                // Get current position and set it as the target
-                int currentPosition = armExtend.getCurrentPosition();
-                armExtend.setTargetPosition(currentPosition + 500); // Move out by 10 ticks
-                armExtend.setPower(0.8);
-            } else if (retractIn) {
-                // Get current position and set it as the target
-                int currentPosition = armExtend.getCurrentPosition();
-                armExtend.setTargetPosition(currentPosition - 500); // Move in by 10 ticks
-                if (gamepad1.b){
-                    armExtend.setPower(1);
-                }else {
-                    armExtend.setPower(0.5);
-                }
-            } else {
-                // Hold the current position when no button is pressed
-                int currentPosition = armExtend.getCurrentPosition();
-                armExtend.setTargetPosition(currentPosition);
-                armExtend.setPower(0.8); // A small power to hold the position
+                int currentPosition1 = armLift1.getCurrentPosition();
+                armLift1.setTargetPosition(currentPosition1);
+                armLift1.setPower(0.5); // A small power to hold the position
+                // Hold the current position when not driving and no button is pressed
+                int currentPosition2 = armLift2.getCurrentPosition();
+                armLift2.setTargetPosition(currentPosition2);
+                armLift2.setPower(0.5); // A small power to hold the position
             }
 
             if (Math.abs(y) < deadzone && Math.abs(x) < deadzone && Math.abs(rx) < deadzone) {
