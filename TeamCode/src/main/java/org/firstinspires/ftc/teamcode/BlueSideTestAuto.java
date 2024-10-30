@@ -25,7 +25,7 @@ public class BlueSideTestAuto extends LinearOpMode {
         private DcMotorEx lift;
 
         public Lift(HardwareMap hardwareMap) {
-            lift = hardwareMap.get(DcMotorEx.class, "liftMotor");
+            lift = hardwareMap.get(DcMotorEx.class, "liftMotor" );
             lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             lift.setDirection(DcMotorSimple.Direction.FORWARD);
         }
