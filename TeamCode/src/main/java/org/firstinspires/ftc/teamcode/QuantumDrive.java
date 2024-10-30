@@ -1,36 +1,43 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.*;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.PwmControl;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 @TeleOp(name = "QuantumDrive")
 public class QuantumDrive extends LinearOpMode {
-    Servo clawServo;
-    Servo wristServo;
-    Servo arm1Servo;
-    Servo arm0Servo;
-    Servo liftUpServo;
     @Override
     public void runOpMode() throws InterruptedException {
         DcMotor frontLeftMotor = hardwareMap.dcMotor.get("leftFront");
-        DcMotor backLeftMotor = hardwareMap.dcMotor.get("leftRear");
+        DcMotor backLeftMotor = hardwareMap.dcMotor.get("leftBack");
         DcMotor frontRightMotor = hardwareMap.dcMotor.get("rightFront");
-        DcMotor backRightMotor = hardwareMap.dcMotor.get("rightRear");
+        DcMotor backRightMotor = hardwareMap.dcMotor.get("rightBack");
         DcMotor armLift1 = hardwareMap.dcMotor.get("lift1");
         DcMotor armLift2 = hardwareMap.dcMotor.get("lift2");
 
-        clawServo = hardwareMap.servo.get("claw");
-        wristServo = hardwareMap.servo.get("wrist");
-        arm1Servo = hardwareMap.servo.get("arm1");
-        arm0Servo = hardwareMap.servo.get("arm0");
-        liftUpServo = hardwareMap.servo.get("liftUp");
+        ServoImplEx clawServo = (ServoImplEx)hardwareMap.servo.get("claw");
+        ServoImplEx wristServo = (ServoImplEx)hardwareMap.servo.get("wrist");
+        ServoImplEx arm1Servo = (ServoImplEx)hardwareMap.servo.get("arm1");
+        ServoImplEx arm0Servo = (ServoImplEx)hardwareMap.servo.get("arm0");
+        ServoImplEx liftUpServo = (ServoImplEx) hardwareMap.servo.get("liftUp");
+        ServoImplEx liftUpLServo = (ServoImplEx) hardwareMap.servo.get("liftUpL");
+        PwmControl.PwmRange pwmRange = new PwmControl.PwmRange(500, 2500);
+        liftUpServo.setPwmRange(pwmRange);
+        liftUpLServo.setPwmRange(pwmRange);
+        clawServo.setPwmRange(pwmRange);
+        wristServo.setPwmRange(pwmRange);
+        arm1Servo.setPwmRange(pwmRange);
+        arm0Servo.setPwmRange(pwmRange);
+
 
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         armLift1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armLift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armLift2.setDirection(DcMotorSimple.Direction.REVERSE);
         waitForStart();
 
         if (isStopRequested()) return;
@@ -62,59 +69,83 @@ public class QuantumDrive extends LinearOpMode {
         // Main loop: run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             // double y = gamepad1.left_stick_y;
-            double y = Math.abs(gamepad1.left_stick_y) > deadzone ? gamepad1.left_stick_y : gamepad1.right_stick_y;
-            double x = -gamepad1.right_stick_x * 1.1;
-            double rx = -gamepad1.left_stick_x;
+            double y = gamepad1.left_stick_y;
+            double x = -gamepad1.left_stick_x * 1.1;
+            double rx = -gamepad1.right_stick_x;
             // dn
-            boolean liftUp = gamepad1.left_bumper;
-            boolean liftDown = gamepad1.left_trigger > 0.1;
-            boolean extendOut = gamepad1.right_bumper;
-            boolean retractIn = gamepad1.right_trigger > 0.1;
+            boolean liftOut = gamepad1.left_bumper;
+            boolean liftIn = gamepad1.left_trigger > 0.1;
+            boolean liftUp = gamepad1.right_bumper;
+            boolean liftDown = gamepad1.right_trigger > 0.1;
 
+            if (gamepad1.dpad_up) {
+                double currentArm0Pos = arm0Servo.getPosition();
+                arm0Servo.setPosition(currentArm0Pos+0.01);
+            } else if (gamepad1.dpad_down) {
+                double currentArm0Pos = arm0Servo.getPosition();
+                arm0Servo.setPosition(currentArm0Pos-0.01);
+            }
+            if (gamepad1.dpad_left) {
+                double currentArm1Pos = arm1Servo.getPosition();
+                arm1Servo.setPosition(currentArm1Pos+0.01);
+            } else if (gamepad1.dpad_right) {
+                double currentArm1Pos = arm1Servo.getPosition();
+                arm1Servo.setPosition(currentArm1Pos-0.01);
+            }
             if (gamepad1.a) {
-                // Extract the piece
-                clawServo.setPosition(0.8);
+                // Grab the piece
+                clawServo.setPosition(0.45);
             } else if (gamepad1.b) {
-                // Intake the piece
-                wristServo.setPosition(0.5);
-                clawServo.setPosition(0);
-            }else {
+                // Extract the piece
                 clawServo.setPosition(0);
             }
 
             if (gamepad1.x) {
-                // Up the wrist
-                wristServo.setPosition(0.0);
-            } else if (gamepad1.y) {
-                // Down the wrist
-                wristServo.setPosition(0.5);
+                // Rotate CCW
+                double currentWristPos = wristServo.getPosition();
+                wristServo.setPosition(currentWristPos-0.01);
+            }
+            else if (gamepad1.y) {
+                // Rotate CW
+                double currentWristPos = wristServo.getPosition();
+                wristServo.setPosition(currentWristPos+0.01);
+            }
+            if (liftUp){
+                double currentLiftPos = liftUpServo.getPosition();
+                liftUpServo.setPosition(currentLiftPos-0.01);
+                double currentLiftPosL = liftUpLServo.getPosition();
+                liftUpLServo.setPosition(currentLiftPosL+0.01);
+            }
+            if (liftDown){
+                double currentLiftPos = liftUpServo.getPosition();
+                liftUpServo.setPosition(currentLiftPos+0.01);
+                double currentLiftPosL = liftUpLServo.getPosition();
+                liftUpLServo.setPosition(currentLiftPosL-0.01);
             }
 
-            if (liftUp) {
+            if (liftIn) {
                 // Get current position and set it as the target
                 int currentPosition1 = armLift1.getCurrentPosition();
-                armLift1.setTargetPosition(currentPosition1 + 100); // Move up by 50 ticks
-                armLift1.setPower(0.8);
+                armLift1.setTargetPosition(currentPosition1 + 200); // Move up by 50 ticks
+                armLift1.setPower(1);
                 int currentPosition2 = armLift2.getCurrentPosition();
-                armLift2.setTargetPosition(currentPosition2 + 100); // Move up by 50 ticks
-                armLift2.setPower(0.8);
-            } else if (liftDown) {
+                armLift2.setTargetPosition(currentPosition2 + 200); // Move up by 50 ticks
+                armLift2.setPower(1);
+            } else if (liftOut) {
                 // Get current position and set it as the target
                 int currentPosition1 = armLift1.getCurrentPosition();
-                armLift1.setTargetPosition(currentPosition1 - 100); // Move down by 50 ticks
-                armLift1.setPower(0.8);
+                armLift1.setTargetPosition(currentPosition1 - 200); // Move down by 50 ticks
+                armLift1.setPower(1);
                 int currentPosition2 = armLift2.getCurrentPosition();
-                armLift2.setTargetPosition(currentPosition2 - 100); // Move down by 50 ticks
-                armLift2.setPower(0.8);
-            } else {
-                // Hold the current position when not driving and no button is pressed
+                armLift2.setTargetPosition(currentPosition2 - 200); // Move down by 50 ticks
+                armLift2.setPower(1);
+            }else{
                 int currentPosition1 = armLift1.getCurrentPosition();
-                armLift1.setTargetPosition(currentPosition1);
-                armLift1.setPower(0.5); // A small power to hold the position
-                // Hold the current position when not driving and no button is pressed
+                armLift1.setTargetPosition(currentPosition1); // Move down by 50 ticks
+                armLift1.setPower(0.3);
                 int currentPosition2 = armLift2.getCurrentPosition();
-                armLift2.setTargetPosition(currentPosition2);
-                armLift2.setPower(0.5); // A small power to hold the position
+                armLift2.setTargetPosition(currentPosition2); // Move down by 50 ticks
+                armLift2.setPower(0.3);
             }
 
             if (Math.abs(y) < deadzone && Math.abs(x) < deadzone && Math.abs(rx) < deadzone) {
