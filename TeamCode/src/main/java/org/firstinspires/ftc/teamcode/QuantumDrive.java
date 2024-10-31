@@ -22,7 +22,7 @@ public class QuantumDrive extends LinearOpMode {
         ServoImplEx wristServo = (ServoImplEx)hardwareMap.servo.get("wrist");
         ServoImplEx arm1Servo = (ServoImplEx)hardwareMap.servo.get("arm1");
         ServoImplEx arm0Servo = (ServoImplEx)hardwareMap.servo.get("arm0");
-        ServoImplEx liftUpServo = (ServoImplEx) hardwareMap.servo.get("liftUp");
+        ServoImplEx liftUpServo = (ServoImplEx) hardwareMap.servo.get("liftUpR");
         ServoImplEx liftUpLServo = (ServoImplEx) hardwareMap.servo.get("liftUpL");
         PwmControl.PwmRange pwmRange = new PwmControl.PwmRange(500, 2500);
         liftUpServo.setPwmRange(pwmRange);

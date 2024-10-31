@@ -22,61 +22,136 @@ import com.qualcomm.robotcore.hardware.Servo;
 @Autonomous(name = "BLUE_TEST_AUTO_PIXEL", group = "Autonomous")
 public class BlueSideTestAuto extends LinearOpMode {
     public class Lift {
-        private DcMotorEx lift;
+        private DcMotorEx lift1;
+        private DcMotorEx lift2;
+        private Servo liftUpL;
+        private Servo liftUpR;
+
 
         public Lift(HardwareMap hardwareMap) {
-            lift = hardwareMap.get(DcMotorEx.class, "liftMotor" );
-            lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            lift.setDirection(DcMotorSimple.Direction.FORWARD);
+            lift1 = hardwareMap.get(DcMotorEx.class, "lift1" );
+            lift2 = hardwareMap.get(DcMotorEx.class, "lift2");
+            lift1.setDirection(DcMotorSimple.Direction.REVERSE);
+            lift1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            lift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            lift2.setDirection(DcMotorSimple.Direction.FORWARD);
+            lift2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            lift1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            liftUpR = hardwareMap.get(Servo.class, "liftUp");
+            liftUpL = hardwareMap.get(Servo.class, "liftUpL");
         }
 
+        public class LiftExt implements Action {
+            private boolean initialized = false;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!initialized) {
+                    lift1.setPower(0.8);
+                    lift2.setPower(0.8);
+                    initialized = true;
+                }
+
+                double pos1 = lift1.getCurrentPosition();
+                double pos2 = lift2.getCurrentPosition();
+                packet.put("lift1Pos", pos1);
+                packet.put("lift2Pos", pos2);
+                if (pos1 < 3000.0 && pos2 < 3000.0) { // Check both motors
+                    return true;
+                } else {
+                    lift1.setPower(0);
+                    lift2.setPower(0);
+                    return false;
+                }
+            }
+        }
+        public Action liftExt() {
+            return new LiftExt();
+        }
+
+        public class LiftRet implements Action {
+            private boolean initialized = false;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!initialized) {
+                    lift1.setPower(-0.8);
+                    lift2.setPower(-0.8);
+                    initialized = true;
+                }
+
+                double pos1 = lift1.getCurrentPosition();
+                packet.put("lift1Pos", pos1);
+                double pos2 = lift2.getCurrentPosition();
+                packet.put("lift2Pos", pos2);
+
+                if (pos1 > 100.0 && pos2 > 100.0) {
+                    return true;
+                } else {
+                    lift1.setPower(0);
+                    lift2.setPower(0);
+                    return false;
+                }
+            }
+        }
+        public Action liftRet(){
+            return new LiftRet();
+        }
         public class LiftUp implements Action {
             private boolean initialized = false;
-
+            public double targetPos = 0.8;
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
-                    lift.setPower(0.8);
+                    liftUpL.setPosition(0.5);
+                    liftUpR.setPosition(0.5);
                     initialized = true;
                 }
+                double pos1 = liftUpL.getPosition();
+                double pos2 = liftUpR.getPosition();
+                packet.put("liftUpL", pos1);
+                packet.put("liftUpR", pos2);
+                return pos1 >= targetPos && pos2 >= targetPos;
 
-                double pos = lift.getCurrentPosition();
-                packet.put("liftPos", pos);
-                if (pos < 3000.0) {
-                    return true;
-                } else {
-                    lift.setPower(0);
-                    return false;
-                }
             }
-        }
-        public Action liftUp() {
-            return new LiftUp();
-        }
-
+            public Action liftUp(){
+                return new LiftUp();
+            }
         public class LiftDown implements Action {
             private boolean initialized = false;
-
+            public double targetPos = 0;
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (!initialized) {
-                    lift.setPower(-0.8);
+                    liftUpL.setPosition(0.5);
+                    liftUpR.setPosition(0.5);
                     initialized = true;
                 }
-
-                double pos = lift.getCurrentPosition();
-                packet.put("liftPos", pos);
-                if (pos > 100.0) {
-                    return true;
-                } else {
-                    lift.setPower(0);
-                    return false;
-                }
+                double pos1 = liftUpL.getPosition();
+                double pos2 = liftUpR.getPosition();
+                packet.put("liftUpL", pos1);
+                packet.put("liftUpR", pos2);
+                return pos1 <= targetPos && pos2 <= targetPos;
             }
+            }
+            public Action liftDown(){
+                return new LiftDown();
+            }
+
+
         }
-        public Action liftDown(){
-            return new LiftDown();
+    }
+
+    public class Arm{
+        private Servo arm0;
+        private Servo arm1;
+        public Arm(HardwareMap hardwareMap){
+            arm0 = hardwareMap.get(Servo.class, "arm0");
+            arm1 = hardwareMap.get(Servo.class, "arm1");
         }
+
+
     }
 
     public class Claw {
@@ -89,7 +164,7 @@ public class BlueSideTestAuto extends LinearOpMode {
         public class CloseClaw implements Action {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                claw.setPosition(0.55);
+                claw.setPosition(0.45);
                 return false;
             }
         }
@@ -100,7 +175,7 @@ public class BlueSideTestAuto extends LinearOpMode {
         public class OpenClaw implements Action {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                claw.setPosition(1.0);
+                claw.setPosition(0);
                 return false;
             }
         }
@@ -176,9 +251,9 @@ public class BlueSideTestAuto extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         trajectoryActionChosen,
-                        lift.liftUp(),
+                        lift.liftExt(),
                         claw.openClaw(),
-                        lift.liftDown(),
+                        lift.liftRet(),
                         trajectoryActionCloseOut
                 )
         );
